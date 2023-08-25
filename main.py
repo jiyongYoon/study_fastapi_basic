@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -16,8 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from database import SessionLocal
+from database import get_db
+import models_schema
 from models import *
+
+from typing import List
 
 
 @app.get("/")
@@ -29,13 +33,10 @@ async def root():
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
-@app.get("/schedulers")
-async def scheduler_list():
-    db = SessionLocal()
+@app.get("/schedulers", response_model=List[models_schema.Scheduler])
+async def scheduler_list(db: Session = Depends(get_db)):
     _scheduler_list = db.query(Scheduler).order_by(Scheduler.id).all()
-    db.close()
     return _scheduler_list
 
 # @app.post("/schedulers")
 # async def create_scheduler():
-#
