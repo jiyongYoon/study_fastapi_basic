@@ -32,16 +32,26 @@ scheduler = BackgroundScheduler()
 job_dic = {}
 
 
-@router.get("", response_model=List[models_schema.Job])
-def job_list(db: Session = Depends(get_db)):
-    _job_list = job_crud.get_job_list(db)
-    return _job_list
+@router.get("", response_model=models_schema.JobList)
+def job_list(db: Session = Depends(get_db),
+             page: int = 0,
+             size: int = 10):
+    total, _job_list = job_crud.get_job_list(db, skip=page*size, limit=size)
+    return {
+        'total': total,
+        'job_list': _job_list
+    }
 
 
-@router.get("/activating", response_model=List[models_schema.Job])
-def activating_job_list(db: Session = Depends(get_db)):
-    _activating_job_list = job_crud.get_activate_job_list(db)
-    return _activating_job_list
+@router.get("/activating", response_model=models_schema.JobList)
+def activating_job_list(db: Session = Depends(get_db),
+                        page: int = 0,
+                        size: int = 10):
+    total, _activating_job_list = job_crud.get_activate_job_list(db, skip=page*size, limit=size)
+    return {
+        'total': total,
+        'job_list': _activating_job_list
+    }
 
 
 @router.get("/{job_id}", response_model=models_schema.Job)
@@ -164,7 +174,7 @@ def deactivate_job(job_id: int,
 
 @router.post("/{job_id}/run")
 def run_job(job_id: int,
-                  db: Session = Depends(get_db)):
+            db: Session = Depends(get_db)):
     db_job: Job = job_crud.get_job(job_id, db)
     if not db_job:
         raise HTTPException(status_code=404, detail="id-not-exist")
@@ -181,5 +191,17 @@ def run_job(job_id: int,
 
 
 @router.on_event("startup")
-def start_scheduler():
+async def start_scheduler():
     scheduler.start()
+
+
+@router.on_event("startup")
+async def reboot_scheduler():
+    db: Session = SessionLocal()
+    try:
+        total, activate_job_list = job_crud.get_activate_job_list(db)
+        for activate_job in activate_job_list:
+            print(f'reboot_scheduler_id: {activate_job.id}')
+            add_job_if_applicable(activate_job, scheduler)
+    finally:
+        db.close()

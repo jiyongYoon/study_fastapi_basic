@@ -2,6 +2,9 @@ from pydantic import BaseModel
 
 import datetime
 
+from typing import List
+
+
 class User(BaseModel):
     id: int
     name: str
@@ -21,6 +24,11 @@ class Job(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class JobList(BaseModel):
+    total: int = 0
+    job_list: List[Job] = []
 
 
 class JobCreate(BaseModel):
