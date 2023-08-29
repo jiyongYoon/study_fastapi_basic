@@ -11,13 +11,29 @@ class User(BaseModel):
         orm_mode = True
 
 
-class Scheduler(BaseModel):
+class Job(BaseModel):
     id: int
     activate: str
-    target_file: str
+    script_file: str
+    config_file: str
+    cron_expression: str
+    create_date: datetime.datetime
 
     class Config:
         orm_mode = True
+
+
+class JobCreate(BaseModel):
+    script_file: str
+    config_file: str
+    cron_expression: str
+
+
+class JobUpdate(BaseModel):
+    id: int
+    script_file: str
+    config_file: str
+    cron_expression: str
 
 
 class Schedule_History(BaseModel):

@@ -14,12 +14,15 @@ class User(Base):
     create_date = Column(DateTime, nullable=False)
 
 
-class Scheduler(Base):
-    __tablename__ = "scheduler"
+class Job(Base):
+    __tablename__ = "job"
 
     id = Column(Integer, primary_key=True)
-    activate = Column(EnumDB(StatusEnum), nullable=False)
-    target_file = Column(String, nullable=False)
+    activate = Column(EnumDB(StatusEnum), nullable=False, default=StatusEnum.STOP)
+    script_file = Column(String, nullable=False)
+    config_file = Column(String, nullable=False)
+    create_date = Column(DateTime, nullable=False)
+    cron_expression = Column(String, default="0 0 * * *")
 
 
 class Schedule_History(Base):
@@ -30,5 +33,5 @@ class Schedule_History(Base):
     act_date = Column(DateTime, nullable=False)
     user_id = Column(Integer, ForeignKey("user.id"))
     user = relationship("User", backref="history")
-    scheduler_id = Column(Integer, ForeignKey("scheduler.id"))
-    scheduler = relationship("Scheduler", backref="history")
+    job_id = Column(Integer, ForeignKey("job.id"))
+    job = relationship("Job", backref="history")
